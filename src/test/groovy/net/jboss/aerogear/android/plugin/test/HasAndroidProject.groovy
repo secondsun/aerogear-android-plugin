@@ -56,6 +56,7 @@ trait HasAndroidProject {
                     keyPassword "dd"
                 }
             }
+            
             defaultConfig {
                 versionCode 1
                 versionName "2.0"
