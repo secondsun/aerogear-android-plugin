@@ -13,15 +13,59 @@ class AddUPSToManifestTask extends ProcessManifest {
 
 
     protected void doFullTaskAction() {
-//        getBuilder().processManifest(
-//                getMainManifest(),
-//                getManifestOverlays(),
-//                getLibraries(),
-//                getPackageNameOverride(),
-//                getVersionCode(),
-//                getVersionName(),
-//                getMinSdkVersion(),
-//                getTargetSdkVersion(),
-//                getManifestOutputFile().absolutePath)
+        if(!checkPermissions()) {
+            addPermissions();
+        }
+
+        if (!checkReceiver()) {
+            addReceiver();
+        }
+
+        if (!checkService()) {
+            addService();
+        }
+
+    }
+
+    /**
+     * Add the Broadcast receiver to the Android manifest for UPS to run.
+     */
+    def addReceiver() {
+
+    }
+
+    /**
+     * Check that the manifest includes the correct breakdcastReceiver to run UPS
+     */
+    def checkReceiver() {
+        return false;
+    }
+
+    /**
+     * Add the IDlistenerservice to the manifest
+     */
+    def addService() {
+
+    }
+
+    /**
+     * Check that the manifest includes IDListenerService
+     */
+    def checkService() {
+        return false;
+    }
+
+    /**
+     * Add the necessary permissions to the Android Manifest for UPS to run.
+     */
+    def addPermissions() {
+
+    }
+
+    /**
+     * Check that the manifest includes the correct permissions for using UPS.
+     */
+    def checkPermissions() {
+        return false;
     }
 }
