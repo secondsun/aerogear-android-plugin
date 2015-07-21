@@ -12,6 +12,7 @@ trait HasAndroidProject {
 
     Project project;
     Project upsProject;
+    Project brokenUpsProject;
 
     @Before
     void createBoringProject() {
@@ -29,6 +30,8 @@ trait HasAndroidProject {
                     keyPassword "dd"
                 }
             }
+
+
             defaultConfig {
                 versionCode 1
                 versionName "2.0"
@@ -56,7 +59,15 @@ trait HasAndroidProject {
                     keyPassword "dd"
                 }
             }
-            
+
+
+            sourceSets {
+                main {
+                    manifest.srcFile  'src/test/resources/AndroidManifest-complete.xml'
+                }
+
+            }
+
             defaultConfig {
                 versionCode 1
                 versionName "2.0"
@@ -76,6 +87,65 @@ trait HasAndroidProject {
             "variantSecret": "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8"
           }
         }"""
+
+        new File([upsProject.projectDir.absolutePath, "src", "test", "resources"].join(File.separator)).mkdirs();
+        def manifestFile = new File([upsProject.projectDir.absolutePath, "src", "test", "resources", "AndroidManifest-complete.xml"].join(File.separator));
+        manifestFile.createNewFile()
+        manifestFile << new File('src/test/resources/AndroidManifest-complete.xml').text
+
+    }
+
+    @Before
+    void createBrokenUPSProject() {
+
+        brokenUpsProject = ProjectBuilder.builder().withProjectDir(
+                File.createTempDir()).build()
+        brokenUpsProject.apply plugin: 'android'
+        brokenUpsProject.android {
+            compileSdkVersion 21
+            buildToolsVersion "22.0.1"
+            signingConfigs {
+                fakeConfig {
+                    storeFile project.file("aa")
+                    storePassword "bb"
+                    keyAlias "cc"
+                    keyPassword "dd"
+                }
+            }
+
+
+            sourceSets {
+                main {
+                    manifest.srcFile  'src/test/resources/AndroidManifest-missing-everything.xml'
+                }
+
+            }
+
+            defaultConfig {
+                versionCode 1
+                versionName "2.0"
+                minSdkVersion 2
+                targetSdkVersion 3
+                signingConfig signingConfigs.fakeConfig
+            }
+        }
+        new File((brokenUpsProject.plugins.withType(AppPlugin).extension.sourceSets[0][2]).assets.getSrcDirs()[0].absolutePath).mkdirs();
+        def file = new File((brokenUpsProject.plugins.withType(AppPlugin).extension.sourceSets[0][2]).assets.getSrcDirs()[0].absolutePath + '/push-config.json');
+        file.createNewFile()
+        file << """{
+          "pushServerURL": "https://localhost:8080/ag-push",
+          "android": {
+            "senderID": "123456",
+            "variantID": "8abfae4eb02a6140c0a20798433180a063fd7006",
+            "variantSecret": "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8"
+          }
+        }"""
+
+        new File([brokenUpsProject.projectDir.absolutePath, "src", "test", "resources"].join(File.separator)).mkdirs();
+        def manifestFile = new File([brokenUpsProject.projectDir.absolutePath, "src", "test", "resources", "AndroidManifest-missing-everything.xml"].join(File.separator));
+        manifestFile.createNewFile()
+        manifestFile << new File('src/test/resources/AndroidManifest-missing-everything.xml').text
+
     }
 
 }

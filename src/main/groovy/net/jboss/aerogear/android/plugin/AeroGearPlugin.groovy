@@ -26,7 +26,9 @@ class AeroGearPlugin implements Plugin<Project>{
 
                 def unifiedPushFile = new File( pushConfigPath );
                 if (unifiedPushFile.exists()) {
-                    project.tasks.create(sourceSetTaskName, AddUPSToManifestTask)
+                    def task = project.tasks.create(sourceSetTaskName, AddUPSToManifestTask)
+                    task.manifest = sourceSet.manifest;
+
                 }
 
             }

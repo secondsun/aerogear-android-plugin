@@ -1,5 +1,7 @@
 package net.jboss.aerogear.android.plugin.task
 
+import com.android.build.gradle.AppPlugin
+import com.android.build.gradle.api.AndroidSourceFile
 import com.android.build.gradle.internal.dependency.ManifestDependencyImpl
 import com.android.build.gradle.tasks.ProcessManifest
 import org.gradle.api.DefaultTask
@@ -9,19 +11,26 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
-class AddUPSToManifestTask extends ProcessManifest {
+class AddUPSToManifestTask extends DefaultTask {
 
 
-    protected void doFullTaskAction() {
-        if(!checkPermissions()) {
+    @Input
+    AndroidSourceFile manifest
+
+    @TaskAction
+    protected void run() {
+
+        def manifestXml = new XmlSlurper().parse(manifest.srcFile);
+
+        if(!checkPermissions(manifestXml)) {
             addPermissions();
         }
 
-        if (!checkReceiver()) {
+        if (!checkReceiver(manifestXml)) {
             addReceiver();
         }
 
-        if (!checkService()) {
+        if (!checkService(manifestXml)) {
             addService();
         }
 
@@ -37,8 +46,20 @@ class AddUPSToManifestTask extends ProcessManifest {
     /**
      * Check that the manifest includes the correct breakdcastReceiver to run UPS
      */
-    def checkReceiver() {
-        return false;
+    def checkReceiver(manifest) {
+        def receivers = manifest.application.'*'.find { node ->
+            node.name() == 'receiver' && node['@android:name'] == 'org.jboss.aerogear.android.unifiedpush.gcm.AeroGearGCMMessageReceiver' && node['@android:permission'] == com.google.android.c2dm.permission.SEND
+        }
+        if (receivers == null || receivers.size() != 0) {
+            return false;
+        }
+
+        def receiver = receivers[0];
+
+
+
+
+        return true;
     }
 
     /**
@@ -51,8 +72,8 @@ class AddUPSToManifestTask extends ProcessManifest {
     /**
      * Check that the manifest includes IDListenerService
      */
-    def checkService() {
-        return false;
+    def checkService(manifest) {
+        return true;
     }
 
     /**
@@ -65,7 +86,7 @@ class AddUPSToManifestTask extends ProcessManifest {
     /**
      * Check that the manifest includes the correct permissions for using UPS.
      */
-    def checkPermissions() {
-        return false;
+    def checkPermissions(manifest) {
+        return true;
     }
 }
