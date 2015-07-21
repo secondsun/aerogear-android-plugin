@@ -1,6 +1,17 @@
+
+plugins {
+    id "com.github.hierynomus.license" version "0.11.0"
+}
+
 apply plugin: 'groovy'
 apply plugin: 'maven'
 apply plugin: 'java-gradle-plugin'
+
+
+license {
+    header rootProject.file('codequality/HEADER')
+    strictCheck true
+}
 
 repositories {
     mavenCentral()
@@ -14,8 +25,8 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
-group='net.jboss.aerogear.android'
-version='3.0.0-SNAPSHOT'
+group = 'net.jboss.aerogear.android'
+version = '3.0.0-SNAPSHOT'
 
 uploadArchives {
     repositories {
