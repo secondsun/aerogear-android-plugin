@@ -19,14 +19,24 @@ import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.api.AndroidSourceFile
 import com.android.build.gradle.internal.dependency.ManifestDependencyImpl
 import com.android.build.gradle.tasks.ProcessManifest
+import groovy.util.slurpersupport.NodeChild
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import groovy.util.slurpersupport.Node
+
+import java.util.concurrent.atomic.AtomicBoolean
 
 class AddUPSToManifestTask extends DefaultTask {
+
+    private static final String TAG = "UPSManifestCheck"
+    
+    private static final Logger LOG = LoggerFactory.getLogger('some-logger')
 
 
     @Input
@@ -59,19 +69,49 @@ class AddUPSToManifestTask extends DefaultTask {
     }
 
     /**
-     * Check that the manifest includes the correct breakdcastReceiver to run UPS
+     * Check that the manifest includes the correct broadcastReceiver to run UPS
      */
     def checkReceiver(manifest) {
-        def receivers = manifest.application.'*'.find { node ->
-            node.name() == 'receiver' && node['@android:name'] == 'org.jboss.aerogear.android.unifiedpush.gcm.AeroGearGCMMessageReceiver' && node['@android:permission'] == com.google.android.c2dm.permission.SEND
+        def receivers = manifest.application.children().findAll { node ->
+            node.name() == 'receiver' && node['@android:name'] == 'org.jboss.aerogear.android.unifiedpush.gcm.AeroGearGCMMessageReceiver' && node['@android:permission'] == 'com.google.android.c2dm.permission.SEND'
         }
-        if (receivers == null || receivers.size() != 0) {
+        if (receivers == null || receivers.size() != 1) {
+            LOG.warn("A UPS Compatible BroadcastReceiver was not found")
             return false;
         }
 
-        def receiver = receivers[0];
+        NodeChild receiver = receivers[0];
 
+        def intentFilters = receiver.children().findAll { node ->
+            AtomicBoolean foundIntentFilter = new AtomicBoolean(false);
+            if (node.name() == 'intent-filter' ) {
+                
+                AtomicBoolean actionFound = new AtomicBoolean(false);
+                AtomicBoolean categoryFound = new AtomicBoolean(false);
+                    
+                node.children().each { intentFilterChild ->
+                    
+                    if (intentFilterChild.name() == 'action' && !(actionFound.get())) {
+                        actionFound.set(intentFilterChild['@android:name'] == "com.google.android.c2dm.intent.RECEIVE");
+                    }
+                    
+                    if (intentFilterChild.name() == 'category' && !categoryFound.get()) {
+                        categoryFound.set(intentFilterChild['@android:name'] == manifest['@package']);
+                    }
+                    
+                    if (actionFound.get() && categoryFound.get()) {
+                        foundIntentFilter.set(true);
+                    }
+                }
+            }
+            
+            return foundIntentFilter.get();
+        }
 
+        if (intentFilters == null || intentFilters.size() != 1) {
+            LOG.warn("A BroadcastReceiver was found, but the intent-filter was not properly configured")
+            return false;
+        }
 
 
         return true;
@@ -88,7 +128,7 @@ class AddUPSToManifestTask extends DefaultTask {
      * Check that the manifest includes IDListenerService
      */
     def checkService(manifest) {
-        return true;
+        return false;
     }
 
     /**
@@ -102,6 +142,6 @@ class AddUPSToManifestTask extends DefaultTask {
      * Check that the manifest includes the correct permissions for using UPS.
      */
     def checkPermissions(manifest) {
-        return true;
+        return false;
     }
 }
