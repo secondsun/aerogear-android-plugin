@@ -128,7 +128,7 @@ class AddUPSToManifestTask extends DefaultTask {
      * Check that the manifest includes IDListenerService
      */
     def checkService(manifest) {
-        return false;
+        throw new IllegalStateException("Not Yet Implemented");
     }
 
     /**
@@ -142,6 +142,6 @@ class AddUPSToManifestTask extends DefaultTask {
      * Check that the manifest includes the correct permissions for using UPS.
      */
     def checkPermissions(manifest) {
-        return false;
+        throw new IllegalStateException("Not Yet Implemented");
     }
 }
